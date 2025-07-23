@@ -1,0 +1,13 @@
+global:
+    scrape_interval: 15s
+    evaluation_interval: 15s
+
+# Load rules once and periodically evaluate them
+rule_files:
+    - "rules/*.yml"
+
+# Scrape configurations
+scrape_configs:
+    - job_name: "mqtt"
+      static_configs:
+          - targets: ["mqtt-bridge:8079"]

@@ -1,0 +1,49 @@
+# Logger configuration
+logging:
+    # logging level - default: INFO
+    level: DEBUG
+    # development mode of logging - default: false
+    developmentMode: false
+
+# HTTP server configuration
+server:
+    # server port - default: 8079
+    port: 8079
+
+# MQTT client configuration
+mqtt:
+    # MQTT broker to connect to - default is: tcp://127.0.0.1
+    # The format should be "scheme://host", where "scheme"
+    # is one of "tcp", "ssl", or "ws", "host" is the ip-address (or hostname).
+    # Default values for hostname is "127.0.0.1", for schema is "tcp://".
+    # IPv6 is supported. Use host in format of "[fd12:3456:789a::1]".
+    host: "tcp://mosquitto"
+    # MQTT broker port - default: 9641
+    port: 1883
+    #connection timeout - default: 3s
+    timeout: 3s
+
+# internal cache holding collected metrics configuration
+cache:
+    # expiration duration of collected entries - default: 60s
+    # expiration <= 0 means no expiration
+    expiration: 60s
+
+# list of metrics to be exported
+metrics:
+    # name of the MQTT topic
+    - mqtt_topic: "status/ambient_temp"
+      # name of the exported metric in prometheus
+      prom_name: "ambient_temperature"
+      # type of prometheus metric, valid values are: "gauge" and "counter"
+      type: "gauge"
+      # prometheus help text of the metric
+      help: "outside temperature"
+      # list of labels with topic name index
+      # index represents part number of topic name split by "/"
+      # example below add {device: "sensorX", negative_idx: "sensorX", out_of_range: ""} labels
+      #   when message received from topic "/home/sensorX/temperature"
+    - mqtt_topic: "status/dhw_tank_temp"
+      prom_name: "tank_temperature"
+      help: "temporature of TUV tank"
+      type: "gauge"
