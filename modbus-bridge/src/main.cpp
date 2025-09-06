@@ -10,15 +10,15 @@
 const char *ssid = "Rychly Internety";
 const char *password = "smrtmlecnebilkovine";
 
-IPAddress staticIP(192, 168, 0, 20);
+IPAddress staticIP(192, 168, 0, 21);
 IPAddress gateway(192, 168, 0, 1);
 IPAddress subnet(255, 255, 255, 0);
 
 const char *mqtt_server = "192.168.0.2";
 const int mqtt_port = 1883;
-const char *mqtt_client_id = "NodeMCU_HeatPump_Bridge";
+const char *mqtt_client_id = "NodeMCU_Sofar_Bridge";
 
-const char *TOPIC_PREFIX = "heatpump/";
+const char *TOPIC_PREFIX = "sofar/";
 
 #define RS485_TX_PIN D4
 #define HEAT_PUMP_SLAVE_ID 1
@@ -37,68 +37,11 @@ struct ModbusRegister {
 
 // Define all the registers we want to handle
 ModbusRegister registers[] = {
-    // === Primary Control Registers (Read/Write) ===
     // Address, Topic, Write, Type, Last Value
-    {1011, "status/power", true, RegisterType::number,
-     0}, // Power On/Off (0=OFF, 1=ON) [cite: 1509]
-    {1012, "status/mode", true, RegisterType::number,
-     0}, // Mode (e.g., 0=Hot water, 1=Heating, etc.) [cite: 1509]
-    {1045, "config/forced_switching_time", true, RegisterType::number,
-     0}, // H32: Forced switching time for heating water [cite: 1509]
-    {1157, "status/dhw_target_temp", true, RegisterType::temp,
-     0}, // R01: Domestic hot water target temperature [cite: 1509]
-    {1158, "status/heating_target_temp", true, RegisterType::temp,
-     0}, // R02: Heating target temperature [cite: 1509]
-    {1159, "status/cooling_target_temp", true, RegisterType::temp,
-     0}, // R03: Cooling target temperature [cite: 1509]
-
-    // === Configuration Registers (Read/Write) ===
-    {1160, "config/heating_startup_diff", true, RegisterType::temp,
-     0}, // R04: Heating start-up return difference [cite: 1509]
-    {1161, "config/heating_shutdown_diff", true, RegisterType::temp,
-     0}, // R05: Heating shutdown temperature difference [cite: 1509]
-    {1193, "config/main_pump_op_temp", true, RegisterType::temp,
-     0}, // R40: Operating ambient temp of main circulating pump [cite: 1509]
-    {1194, "config/ac_pump_op_temp", true, RegisterType::temp,
-     0}, // R41: Operating ambient temp of air conditioning pump [cite: 1509]
-    {1195, "config/dhw_startup_diff", true, RegisterType::temp,
-     0}, // R16: Hot water start-up return difference [cite: 1509]
-    {1196, "config/dhw_shutdown_diff", true, RegisterType::temp,
-     0}, // R17: Hot water shutdown temperature difference [cite: 1509]
-    {1197, "config/circ_pump_mode", true, RegisterType::number,
-     0}, // P01: Operating mode of circulating water pump [cite: 1509]
-    {1198, "config/circ_pump_interval", true, RegisterType::number,
-     0}, // P02: Circulating water pump operation time interval [cite: 1511]
-    {1199, "config/circ_pump_duration", true, RegisterType::number,
-     0}, // P03: Circulating water pump operation duration [cite: 1511]
-    {1201, "config/dhw_pump_mode", true, RegisterType::number,
-     0}, // P05: Operating mode of domestic hot water pump [cite: 1511]
-    {1202, "config/manual_pump_control", true, RegisterType::number,
-     0}, // P06: Manually controlled water pump (Manual typo, likely P06) [cite:
-         // 1511]
-    {1238, "config/max_outlet_temp", true, RegisterType::temp,
-     0}, // R62: Max water outlet temperature of heat pump [cite: 1511]
-
-    // === Read-Only Status Registers ===
-    // Address, Topic, Write, Type, Last Value
-    {2013, "status/temp_value_after_limit", false, RegisterType::temp,
-     0}, // Current temperature value (after limit) [cite: 1511]
-    {2014, "status/temp_value_after_compensation", false, RegisterType::temp,
-     0}, // Current temperature value (after compensation) [cite: 1511]
-    {2019, "status/output_bits", false, RegisterType::bits,
-     0}, // Bitfield of system outputs (compressor, fan, etc.) [cite: 1511]
-    {2034, "status/input_bits", false, RegisterType::bits,
-     0}, // Bitfield of system inputs (switches, etc.) [cite: 1512]
-    {2045, "status/inlet_water_temp", false, RegisterType::temp,
-     0}, // T01: Water inlet temperature [cite: 1512]
-    {2046, "status/outlet_water_temp", false, RegisterType::temp,
-     0}, // T02: Water outlet temperature [cite: 1512]
-    {2047, "status/dhw_tank_temp", false, RegisterType::temp,
-     0}, // T08: Water tank temperature [cite: 1512]
-    {2048, "status/ambient_temp", false, RegisterType::temp,
-     0}, // T04: Ambient temperature [cite: 1512]
-    {2085, "status/error_bits_1", false, RegisterType::bits,
-     0}, // First block of error status bits [cite: 1518]
+    {0x0, "status/mode", false, RegisterType::number, 0},
+    {0xC, "status/power", false, RegisterType::number, 0},
+    {0x16, "status/total_production", false, RegisterType::number, 0},
+    {0x19, "status/today_production", false, RegisterType::number, 0},
 };
 const int numRegisters = sizeof(registers) / sizeof(registers[0]);
 
@@ -125,48 +68,14 @@ void publishRegisterValue(int index, uint16_t value) {
         } else {
             itoa(value, msg_buffer, 10);
         }
-        mqttClient.publish(registers[index].topic, msg_buffer, true);
+        char topic_with_prefix[255];
+        sprintf(topic_with_prefix, "%s%s", TOPIC_PREFIX,
+                registers[index].topic);
+        mqttClient.publish(topic_with_prefix, msg_buffer, true);
     }
 }
 
-// --- Main MQTT and Modbus Functions ---
-void callback(char *topic, byte *payload, unsigned int length) {
-    Serial.printf("[MQTT] Message arrived on topic: %s\n", topic);
-
-    char message[length + 1];
-    memcpy(message, payload, length);
-    message[length] = '\0';
-    Serial.printf("[MQTT] Message payload: %s\n", message);
-
-    // Find which register this command is for
-    for (int i = 0; i < numRegisters; i++) {
-        char topic_cmp[255];
-        sprintf(topic_cmp, "%s%s/set", TOPIC_PREFIX, registers[i].topic);
-        if (registers[i].write && strcmp(topic, topic_cmp) == 0) {
-            uint16_t value_to_write = atoi(message);
-
-            // For temperatures, multiply by 10
-            if (registers[i].type == RegisterType::temp) {
-                value_to_write = (uint16_t)(atof(message) * 10);
-            }
-
-            Serial.printf("[RTU] Writing %d to register %d...\n",
-                          value_to_write, registers[i].address);
-            uint8_t result =
-                node.writeSingleRegister(registers[i].address, value_to_write);
-
-            if (result != node.ku8MBSuccess) {
-                Serial.printf("[RTU] Write failed with error code: 0x%02X\n",
-                              result);
-            } else {
-                Serial.println("[RTU] Write successful.");
-            }
-            return; // Exit after handling the command
-        }
-    }
-}
-
-void reconnect() {
+void MQTTreconnect() {
     while (!mqttClient.connected()) {
         Serial.print("[MQTT] Attempting connection...");
         if (mqttClient.connect(mqtt_client_id)) {
@@ -190,36 +99,7 @@ void reconnect() {
     }
 }
 
-void setup() {
-
-    Serial.begin(115200);
-    Serial.println("\n[SYSTEM] Starting MQTT Modbus Bridge...");
-
-    WiFi.config(staticIP, gateway, subnet);
-    WiFi.begin(ssid, password);
-    while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-        Serial.println("Connection Failed! Rebooting...");
-        delay(5000);
-        ESP.restart();
-    }
-
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
-
-    Serial.println("\n[Wi-Fi] Connected.");
-    Serial.println("\nNO FUCKING WAY.");
-
-    mqttClient.setServer(mqtt_server, mqtt_port);
-    mqttClient.setCallback(callback);
-
-    pinMode(RS485_TX_PIN, OUTPUT);
-    digitalWrite(RS485_TX_PIN, LOW);
-    rs485.begin(9600);
-    node.begin(HEAT_PUMP_SLAVE_ID, rs485);
-
-    node.preTransmission(preTransmission);
-    node.postTransmission(postTransmission);
-
+void setupOTA() {
     // Port defaults to 8266
     // ArduinoOTA.setPort(8266);
 
@@ -266,50 +146,119 @@ void setup() {
     ArduinoOTA.begin();
 }
 
-void loop() {
-    // This part of the loop runs constantly, keeping the MQTT connection alive.
-    if (!mqttClient.connected()) {
-        reconnect();
-    }
-    mqttClient.loop(); // This MUST be called frequently.
-    ArduinoOTA.handle();
+void setup() {
+    Serial.begin(115200);
+    Serial.println("\n[SYSTEM] Starting MQTT Modbus Bridge...");
 
-    delay(1000);
+    WiFi.mode(WIFI_STA);
+    WiFi.config(staticIP, gateway, subnet);
+    WiFi.begin(ssid, password);
+    while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+        Serial.println("Connection Failed! Rebooting...");
+        delay(5000);
+        ESP.restart();
+    }
+
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+
+    Serial.println("\n[Wi-Fi] Connected.");
+
+    mqttClient.setServer(mqtt_server, mqtt_port);
+
+    pinMode(RS485_TX_PIN, OUTPUT);
+    digitalWrite(RS485_TX_PIN, LOW);
+    rs485.begin(9600);
+    node.begin(HEAT_PUMP_SLAVE_ID, rs485);
+
+    node.preTransmission(preTransmission);
+    node.postTransmission(postTransmission);
+
+    setupOTA();
+}
+
+void loop() {
+    // Handle WiFi, MQTT, and OTA updates
+    if (!mqttClient.connected()) {
+        MQTTreconnect();
+    }
+    mqttClient.loop();
+    ArduinoOTA.handle();
 
     Serial.println("--------------------");
     Serial.println("[LOOP] Starting Modbus poll cycle...");
 
-    int frame = 0;
-    int lastId = registers[0].address;
-    for (int i = 0; i <= numRegisters; i++) {
-        if (i >= numRegisters || registers[i].address - lastId > 1) {
-            Serial.printf("[RTU] Reading registers (address %d - %d) = %d, "
-                          "index = %d...\n",
-                          lastId - frame + 1, lastId, frame, i);
-            uint8_t result1 =
-                node.readHoldingRegisters(lastId - frame + 1, frame);
+    // Loop through each register defined in the array
+    for (int i = 0; i < numRegisters; i++) {
+        uint16_t address = registers[i].address;
+        Serial.printf("[RTU] Reading register at address 0x%04X (%d)...\n",
+                      address, address);
 
-            if (result1 == node.ku8MBSuccess) {
-                Serial.println("[RTU] ...Read successful.");
+        // Request one holding register at the specified address
+        uint8_t result = node.readHoldingRegisters(address, 1);
 
-                for (int j = 0; j < frame; j++) {
-                    publishRegisterValue(i - frame + j,
-                                         node.getResponseBuffer(j));
-                }
-            } else {
-                Serial.printf("[RTU] ...FAILED to read.  Error: 0x%02X\n",
-                              result1);
-            }
-            frame = 1;
-            delay(250);
+        // Check the result of the request
+        if (result == node.ku8MBSuccess) {
+            Serial.println("[RTU] ...Read successful.");
+            uint16_t value = node.getResponseBuffer(
+                0); // Get the first (and only) register value
+            publishRegisterValue(i, value);
         } else {
-            frame++;
+            Serial.printf("[RTU] ...FAILED to read. Error: 0x%02X\n", result);
         }
 
-        if (i < numRegisters) {
-            lastId = registers[i].address;
-        }
+        // A small delay between each Modbus request is good practice
+        delay(250);
     }
 
     Serial.println("[LOOP] Poll cycle finished.");
+    delay(5000); // Wait 5 seconds before starting the next poll cycle
 }
+
+// void loop() {
+//     // This part of the loop runs constantly, keeping the MQTT connection
+//     alive. if (!mqttClient.connected()) {
+//         MQTTreconnect();
+//     }
+//     mqttClient.loop(); // This MUST be called frequently.
+//     ArduinoOTA.handle();
+//
+//     delay(1000);
+//
+//     Serial.println("--------------------");
+//     Serial.println("[LOOP] Starting Modbus poll cycle...");
+//
+//     int frame = 0;
+//     int lastId = registers[0].address;
+//     for (int i = 0; i <= numRegisters; i++) {
+//         if (i >= numRegisters || registers[i].address - lastId > 1) {
+//             Serial.printf("[RTU] Reading registers (address %d - %d) = %d, "
+//                           "index = %d...\n",
+//                           lastId - frame + 1, lastId, frame, i);
+//             uint8_t result1 =
+//                 node.readHoldingRegisters(lastId - frame + 1, frame);
+//
+//             if (result1 == node.ku8MBSuccess) {
+//                 Serial.println("[RTU] ...Read successful.");
+//
+//                 for (int j = 0; j < frame; j++) {
+//                     publishRegisterValue(i - frame + j,
+//                                          node.getResponseBuffer(j));
+//                 }
+//             } else {
+//                 Serial.printf("[RTU] ...FAILED to read.  Error: 0x%02X\n",
+//                               result1);
+//             }
+//             frame = 1;
+//             delay(250);
+//         } else {
+//             frame++;
+//         }
+//
+//         if (i < numRegisters) {
+//             lastId = registers[i].address;
+//         }
+//     }
+//
+//     Serial.println("[LOOP] Poll cycle finished.");
+// }
