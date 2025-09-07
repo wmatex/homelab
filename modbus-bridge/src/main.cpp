@@ -183,7 +183,7 @@ void loop() {
         MQTTreconnect();
     }
     mqttClient.loop();
-    ArduinoOTA.handle();
+    // ArduinoOTA.handle();
 
     Serial.println("--------------------");
     Serial.println("[LOOP] Starting Modbus poll cycle...");
