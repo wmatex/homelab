@@ -17,7 +17,7 @@ IPAddress subnet(255, 255, 255, 0);
 
 const char *mqtt_server = "192.168.0.2";
 const int mqtt_port = 1883;
-const char *mqtt_client_id = "NodeMCU_Sofar_Bridge";
+const char *mqtt_client_id = "NodeMCU_Temperature_Sensor1";
 
 const char *TOPIC = "sensor/temperature/ambient";
 

@@ -1,3 +1,4 @@
+name: modbus-bridge
 services:
     mqtt-bridge:
         image: torilabs/mqtt-prometheus-exporter:latest
