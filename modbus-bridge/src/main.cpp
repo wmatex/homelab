@@ -85,9 +85,9 @@ ModbusRegister registers[] = {
      0}, // Current temperature value (after limit) [cite: 1511]
     {2014, "status/temp_value_after_compensation", false, RegisterType::temp,
      0}, // Current temperature value (after compensation) [cite: 1511]
-    {2019, "status/output_bits", false, RegisterType::bits,
+    {2019, "status/output_bits", true, RegisterType::bits,
      0}, // Bitfield of system outputs (compressor, fan, etc.) [cite: 1511]
-    {2034, "status/input_bits", false, RegisterType::bits,
+    {2034, "status/input_bits", true, RegisterType::bits,
      0}, // Bitfield of system inputs (switches, etc.) [cite: 1512]
     {2045, "status/inlet_water_temp", false, RegisterType::temp,
      0}, // T01: Water inlet temperature [cite: 1512]
