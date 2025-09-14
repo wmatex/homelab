@@ -125,7 +125,10 @@ void publishRegisterValue(int index, uint16_t value) {
         } else {
             itoa(value, msg_buffer, 10);
         }
-        mqttClient.publish(registers[index].topic, msg_buffer, true);
+        char topic_with_prefix[255];
+        sprintf(topic_with_prefix, "%s%s", TOPIC_PREFIX,
+                registers[index].topic);
+        mqttClient.publish(topic_with_prefix, msg_buffer, true);
     }
 }
 
