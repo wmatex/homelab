@@ -38,6 +38,19 @@ services:
             - 9696:9696
         restart: unless-stopped
 
+    bazarr:
+        image: lscr.io/linuxserver/bazarr:latest
+        environment:
+            - PUID=1000
+            - PGID=1000
+            - TZ=Europe/Prague
+        volumes:
+            - /opt/bazarr:/config
+            - /mnt/data/media:/media
+        ports:
+            - 6767:6767
+        restart: unless-stopped
+
     qbittorrent:
         image: lscr.io/linuxserver/qbittorrent:latest
         environment:
