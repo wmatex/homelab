@@ -64,6 +64,17 @@ services:
             - 6767:6767
         restart: unless-stopped
 
+    overseerr:
+        image: sctx/overseerr:latest
+        environment:
+            - TZ=Europe/Prague
+            - PORT=5055
+        ports:
+            - 5055:5055
+        volumes:
+            - /opt/overseerr:/app/config
+        restart: unless-stopped
+
     qbittorrent:
         image: lscr.io/linuxserver/qbittorrent:latest
         environment:
