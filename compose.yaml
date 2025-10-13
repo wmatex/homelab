@@ -96,7 +96,7 @@ services:
         image: sctx/overseerr:latest
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.overseerr.rule=Host(`overseerr.naboo.lan`, `filmy.naboo.lan`, `movies.naboo.lan`)"
+            - "traefik.http.routers.overseerr.rule=Host(`overseerr.naboo.lan`) || Host(`filmy.naboo.lan`) || Host(`movies.naboo.lan`)"
             - "traefik.http.routers.overseerr.entrypoints=web"
         environment:
             - TZ=Europe/Prague
@@ -113,6 +113,7 @@ services:
             - "traefik.enable=true"
             - "traefik.http.routers.qbittorrent.rule=Host(`torrent.naboo.lan`)"
             - "traefik.http.routers.qbittorrent.entrypoints=web"
+            - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
         environment:
             - PUID=1000
             - PGID=1000
