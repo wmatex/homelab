@@ -1,10 +1,22 @@
 services:
+    traefik:
+        image: traefik:v3
+        ports:
+            - "80:80"
+            - "443:443"
+            - "8081:8080"
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+            - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+        restart: unless-stopped
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+
     mosquitto:
         image: eclipse-mosquitto:latest
         ports:
             - "1883:1883"
-        networks:
-            - monitoring
         volumes:
             - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
         restart: unless-stopped
@@ -17,6 +29,10 @@ services:
             - TZ=Europe/Prague
         extra_hosts:
             - "host.docker.internal:host-gateway"
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.radarr.rule=Host(`radarr.naboo.lan`)"
+            - "traefik.http.routers.radarr.entrypoints=web"
         volumes:
             - /opt/radarr:/config
             - /mnt/data/media:/data
@@ -26,6 +42,10 @@ services:
 
     sonarr:
         image: lscr.io/linuxserver/sonarr:latest
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.sonarr.rule=Host(`sonarr.naboo.lan`)"
+            - "traefik.http.routers.sonarr.entrypoints=web"
         environment:
             - PUID=1000
             - PGID=1000
@@ -39,6 +59,10 @@ services:
 
     prowlarr:
         image: lscr.io/linuxserver/prowlarr:latest
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.naboo.lan`)"
+            - "traefik.http.routers.prowlarr.entrypoints=web"
         environment:
             - PUID=1000
             - PGID=1000
@@ -53,6 +77,10 @@ services:
 
     bazarr:
         image: lscr.io/linuxserver/bazarr:latest
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.bazarr.rule=Host(`bazarr.naboo.lan`)"
+            - "traefik.http.routers.bazarr.entrypoints=web"
         environment:
             - PUID=1000
             - PGID=1000
@@ -66,6 +94,10 @@ services:
 
     overseerr:
         image: sctx/overseerr:latest
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.overseerr.rule=Host(`overseerr.naboo.lan`, `filmy.naboo.lan`, `movies.naboo.lan`)"
+            - "traefik.http.routers.overseerr.entrypoints=web"
         environment:
             - TZ=Europe/Prague
             - PORT=5055
@@ -77,6 +109,10 @@ services:
 
     qbittorrent:
         image: lscr.io/linuxserver/qbittorrent:latest
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.qbittorrent.rule=Host(`torrent.naboo.lan`)"
+            - "traefik.http.routers.qbittorrent.entrypoints=web"
         environment:
             - PUID=1000
             - PGID=1000
@@ -91,7 +127,3 @@ services:
             - 6881:6881
             - 6881:6881/udp
         restart: unless-stopped
-
-networks:
-    monitoring:
-        enable_ipv6: true

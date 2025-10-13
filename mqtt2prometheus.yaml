@@ -32,7 +32,7 @@ cache:
 # list of metrics to be exported
 metrics:
     # name of the MQTT topic
-    - mqtt_topic: "status/ambient_temp"
+    - mqtt_topic: "heatpump/status/ambient_temp"
       # name of the exported metric in prometheus
       prom_name: "ambient_temperature"
       # type of prometheus metric, valid values are: "gauge" and "counter"
@@ -43,7 +43,7 @@ metrics:
       # index represents part number of topic name split by "/"
       # example below add {device: "sensorX", negative_idx: "sensorX", out_of_range: ""} labels
       #   when message received from topic "/home/sensorX/temperature"
-    - mqtt_topic: "status/dhw_tank_temp"
+    - mqtt_topic: "heatpump/status/dhw_tank_temp"
       prom_name: "tank_temperature"
       help: "temporature of TUV tank"
       type: "gauge"
