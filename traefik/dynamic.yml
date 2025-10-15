@@ -1,16 +1,25 @@
 http:
+    middlewares:
+        ipwhitelist:
+            ipWhiteList:
+                sourceRange:
+                    - "192.168.0.0/24"
     routers:
         homeassistant:
-            rule: "Host(`ha.naboo.lan`)"
+            rule: "Host(`ha.naboo.lan`) || Host(`ha.wmatex.cz`)"
             service: homeassistant
             entryPoints:
                 - web
+            middlewares:
+                - ipwhitelist@file
 
         plex:
             rule: "Host(`plex.naboo.lan`)"
             service: plex
             entryPoints:
                 - web
+            middlewares:
+                - ipwhitelist@file
     services:
         homeassistant:
             loadBalancer:

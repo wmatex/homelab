@@ -33,6 +33,7 @@ services:
             - "traefik.enable=true"
             - "traefik.http.routers.radarr.rule=Host(`radarr.naboo.lan`)"
             - "traefik.http.routers.radarr.entrypoints=web"
+            - "traefik.http.routers.radarr.middlewares=ipwhitelist@file"
         volumes:
             - /opt/radarr:/config
             - /mnt/data/media:/data
@@ -46,6 +47,7 @@ services:
             - "traefik.enable=true"
             - "traefik.http.routers.sonarr.rule=Host(`sonarr.naboo.lan`)"
             - "traefik.http.routers.sonarr.entrypoints=web"
+            - "traefik.http.routers.sonarr.middlewares=ipwhitelist@file"
         environment:
             - PUID=1000
             - PGID=1000
@@ -63,6 +65,7 @@ services:
             - "traefik.enable=true"
             - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.naboo.lan`)"
             - "traefik.http.routers.prowlarr.entrypoints=web"
+            - "traefik.http.routers.prowlarr.middlewares=ipwhitelist@file"
         environment:
             - PUID=1000
             - PGID=1000
@@ -81,6 +84,7 @@ services:
             - "traefik.enable=true"
             - "traefik.http.routers.bazarr.rule=Host(`bazarr.naboo.lan`)"
             - "traefik.http.routers.bazarr.entrypoints=web"
+            - "traefik.http.routers.bazarr.middlewares=ipwhitelist@file"
         environment:
             - PUID=1000
             - PGID=1000
@@ -98,6 +102,7 @@ services:
             - "traefik.enable=true"
             - "traefik.http.routers.overseerr.rule=Host(`overseerr.naboo.lan`) || Host(`filmy.naboo.lan`) || Host(`movies.naboo.lan`)"
             - "traefik.http.routers.overseerr.entrypoints=web"
+            - "traefik.http.routers.overseerr.middlewares=ipwhitelist@file"
         environment:
             - TZ=Europe/Prague
             - PORT=5055
@@ -113,6 +118,7 @@ services:
             - "traefik.enable=true"
             - "traefik.http.routers.qbittorrent.rule=Host(`torrent.naboo.lan`)"
             - "traefik.http.routers.qbittorrent.entrypoints=web"
+            - "traefik.http.routers.qbittorrent.middlewares=ipwhitelist@file"
             - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
         environment:
             - PUID=1000
