@@ -4,14 +4,35 @@ http:
             ipWhiteList:
                 sourceRange:
                     - "192.168.0.0/24"
+        redirect-to-https:
+            redirectScheme:
+                scheme: https
+                permanent: true
+
     routers:
-        homeassistant:
-            rule: "Host(`ha.naboo.lan`) || Host(`ha.wmatex.cz`)"
+        homeassistant-lan:
+            rule: "Host(`ha.naboo.lan`)"
             service: homeassistant
             entryPoints:
                 - web
             middlewares:
                 - ipwhitelist@file
+
+        homeassistant-redirect:
+            rule: "Host(`ha.wmatex.cz`)"
+            service: homeassistant
+            entryPoints:
+                - web
+            middlewares:
+                - redirect-to-https@file
+
+        homeassistant-tls:
+            rule: "Host(`ha.wmatex.cz`)"
+            service: homeassistant
+            entryPoints:
+                - websecure
+            tls:
+                certResolver: letsencrypt
 
         plex:
             rule: "Host(`plex.naboo.lan`)"

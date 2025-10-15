@@ -8,6 +8,14 @@ api:
     dashboard: true
     insecure: true
 
+certificatesResolvers:
+    letsencrypt:
+        acme:
+            email: wmatex@gmail.com
+            storage: /etc/traefik/acme/acme.json
+            httpChallenge:
+                entryPoint: web
+
 providers:
     file:
         filename: /etc/traefik/dynamic.yml
