@@ -8,7 +8,7 @@ services:
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock:ro
             - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-            - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+            - ./traefik/conf.d:/etc/traefik/conf.d:ro
             - traefik-acme:/etc/traefik/acme
         restart: unless-stopped
         extra_hosts:

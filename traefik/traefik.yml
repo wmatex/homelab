@@ -3,6 +3,9 @@ entryPoints:
         address: ":80"
     websecure:
         address: ":443"
+        transport:
+            respondingTimeouts:
+                readTimeout: 24h
 
 api:
     dashboard: true
@@ -18,7 +21,7 @@ certificatesResolvers:
 
 providers:
     file:
-        filename: /etc/traefik/dynamic.yml
+        directory: /etc/traefik/conf.d
         watch: true
     docker:
         exposedByDefault: false
