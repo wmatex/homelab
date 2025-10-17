@@ -37,7 +37,7 @@ services:
             - "traefik.http.routers.radarr.middlewares=ipwhitelist@file"
         volumes:
             - /opt/radarr:/config
-            - /mnt/data/media:/data
+            - /mnt/media/plex:/media
         ports:
             - 7878:7878
         restart: unless-stopped
@@ -55,7 +55,7 @@ services:
             - TZ=Europe/Prague
         volumes:
             - /opt/sonarr:/config
-            - /mnt/data/media:/media
+            - /mnt/media/plex:/media
         ports:
             - 8989:8989
         restart: unless-stopped
@@ -92,7 +92,7 @@ services:
             - TZ=Europe/Prague
         volumes:
             - /opt/bazarr:/config
-            - /mnt/data/media:/media
+            - /mnt/media/plex:/media
         ports:
             - 6767:6767
         restart: unless-stopped
@@ -129,7 +129,7 @@ services:
             - TORRENTING_PORT=6881
         volumes:
             - /opt/qbittorrent:/config
-            - /mnt/data/media/torrentz:/downloads
+            - /mnt/media/plex/torrentz:/downloads
         ports:
             - 8080:8080
             - 6881:6881
